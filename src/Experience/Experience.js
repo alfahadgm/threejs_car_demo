@@ -4,7 +4,9 @@ import Time from "./Utils/Time.js"
 import Camera from "./Camera.js"
 import Renderer from './Renderer.js'
 import World from './World/World.js'
+import Resources from './Utils/Resources.js'
 import Debug from './Utils/Debug.js'
+import sources from './sources.js'
 import PhysicsWorld from './PhysicsWorld.js'
 
 let instance = null
@@ -18,6 +20,9 @@ export default class Experience {
 
         instance = this
 
+        // Global access
+        window.experience = this
+
         // Options
         this.canvas = canvas
 
@@ -26,25 +31,15 @@ export default class Experience {
         this.sizes = new Sizes()
         this.time = new Time()
         this.scene = new THREE.Scene()
-        this.worldPhysics = new PhysicsWorld()
+        this.worldPhysics = new PhysicsWorld(this.debug, this.scene)
+        this.resources = new Resources(sources)
         this.camera = new Camera()
         this.renderer = new Renderer()
-
-        // Handle loading screen manually
-        const loadingScreen = document.getElementById('loading-screen')
-        setTimeout(() => {
-            loadingScreen.classList.add('fade-out')
-            loadingScreen.addEventListener('transitionend', (event) => {
-                event.target.remove()
-            })
-        }, 500)
-
         this.world = new World()
 
-        // Access simpleCar directly from world
-        if (this.world.simpleCar) {
-            this.simpleCar = this.world.simpleCar
-        }
+        this.world.resources.on('ready', () => {
+            this.car = this.world.car
+        })
 
         // Sizes resize event
         this.sizes.on('resize', () => {
@@ -62,15 +57,13 @@ export default class Experience {
         this.renderer.resize()
     }
 
-    // Only modify the update method
-
     update() {
-        this.camera.update() // Add this line to update the orbit controls
+        //this.camera.update()
         this.renderer.update()
         this.worldPhysics.update()
-
-        if (this.simpleCar) {
-            this.simpleCar.update()
+        
+        if (this.car) {
+            this.car.update()
         }
     }
 
@@ -98,5 +91,7 @@ export default class Experience {
         if (this.debug.active) {
             this.debug.gui.destroy()
         }
+        // Remove the canvas
+        //this.canvas.remove()
     }
 }
